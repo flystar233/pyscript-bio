@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
+
+import os
 import pandas as pd
 import click
 import collections
@@ -12,13 +14,16 @@ import collections
     "-p", "--position", type=str, help="snp position file(It can only contain position.)"
     )
 @click.option(
+    "-w", "--width", default=1000000, type=int, help="Total length of upstream and downstream of SNP locus (default 1M)"
+)
+@click.option(
     "-o",
     "--out",
     default="out.txt",
     type=str,
     help="Output file (default 'out.txt')")
 
-def command_line_runner(gff,position,out):
+def command_line_runner(gff,position,width,out):
 	"""
 	According to the results of GWAS, the genes of upstream and downstream 1M of SNP locus were selected.
 	"""
@@ -35,8 +40,8 @@ def command_line_runner(gff,position,out):
 			for z in df_all:
 				for a in pos:
 					snp = int(a.strip())
-					snpdown = snp - 500000
-					for i in range(0,1000001,1000):
+					snpdown = snp - width/2 #set downstream
+					for i in range(0,width+1,1000):
 						snpnow = snpdown +i
 						if z[0] <= snpnow < z[1]:
 							mydcit[z[2]].append(snpnow)
@@ -50,4 +55,3 @@ def command_line_runner(gff,position,out):
 					
 if __name__ == "__main__":
 	command_line_runner()
-
