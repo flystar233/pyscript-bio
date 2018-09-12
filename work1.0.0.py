@@ -27,7 +27,7 @@ def command_line_runner(gff,position,width,out):
 	"""
 	According to the results of GWAS, the genes of upstream and downstream 1M of SNP locus were selected.
 	"""
-	VERSION = "1.0.0"
+	_VERSION = "1.0.0"
 	try:
 		mydcit = collections.defaultdict(list)
 		df = pd.read_table(gff,sep='\t',header=None)
