@@ -29,7 +29,7 @@ def command_line_runner(gff,position,width,out):
 	"""
 	_VERSION = "1.1.1"
 	try:
-    print("--------------------------------------------\nLooking for genes...\nThe gene and iterative position will be saved in {}".format(out))
+    	print("--------------------------------------------\nLooking for genes...\nThe gene and iterative position will be saved in {}".format(out))
 		mydcit = collections.defaultdict(list)
 		df = pd.read_table(gff,sep='\t',header=None)
 		pos = pd.read_table(position,sep='\t',header=None)
