@@ -27,29 +27,33 @@ def command_line_runner(gff,position,width,out):
 	"""
 	According to the results of GWAS, the genes of upstream and downstream 1M of SNP locus were selected.
 	"""
-  _VERSION = "1.1.0"
-	mydcit = collections.defaultdict(list)
-	df = pd.read_table(gff,sep='\t',header=None)
-	outfile = open(out,'w')
-	df3 = df.iloc[:,3]  #select position and gene
-	df4 = df.iloc[:,4]
-	df8 = df.iloc[:,8]
-	df_all = zip(df3,df4,df8) #crate a zip include df3 df4 df8 
-	pos = pd.read_table(position,sep='\t',header=None)
-	posnow = pos.iloc[:,1]
-	for z in df_all:
-		for a in posnow:
-			snp = int(a)
-			snpdown = snp - width/2 #set downstream
-			for i in range(0,width+1,1000):
-				snpnow = snpdown +i
-				if z[0] <= snpnow < z[1]:
-					mydcit[z[2]].append(snpnow)
-	outfile.write("gene\tposition\n")
-	for key in mydcit.keys():
-		outfile.write("{}\t{}\n".format(key,mydcit[key]))
-	number = len(mydcit.keys())
-	print("There are {} gene in {}".format(number,out))
+	_VERSION = "1.1.0"
+	try:
+		mydcit = collections.defaultdict(list)
+		df = pd.read_table(gff,sep='\t',header=None)
+		pos = pd.read_table(position,sep='\t',header=None)
+		outfile = open(out,'w')
+		df3 = df.iloc[:,3]  #select position and gene
+		df4 = df.iloc[:,4]
+		df8 = df.iloc[:,8]
+		df_all = zip(df3,df4,df8) #crate a zip include df3 df4 df8
+		posnow = pos.iloc[:,1]
+		for z in df_all:
+			for a in posnow:
+				snp = int(a)
+				snpdown = snp - width/2 #set downstream
+				for i in range(0,width+1,1000):
+					snpnow = snpdown +i
+					if z[0] <= snpnow < z[1]:
+						mydcit[z[2]].append(snpnow)
+		outfile.write("gene\tposition\n")
+		for key in mydcit.keys():
+			outfile.write("{}\t{}\n".format(key,mydcit[key]))
+		number = len(mydcit.keys())
+		print("There are {} gene in {}".format(number,out))
+	except:
+		print("Please input your option, or use --help")
 	
 if __name__ == "__main__":
 	command_line_runner()
+
