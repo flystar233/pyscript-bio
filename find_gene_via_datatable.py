@@ -63,7 +63,7 @@ def command_line_runner(gff,position,width,out):
 		for key in mydcit.keys():
 			outfile.write("{}\t{}\n".format(key,mydcit[key]))
 		number = len(mydcit.keys())
-		print("Work done,there are {} gene in file{}".format(number,out))
+		print("Work done,there are {} gene in file {}".format(number,out))
 	except:
 		print("Please input your option, or use --help")
 	
