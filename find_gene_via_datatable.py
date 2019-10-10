@@ -42,6 +42,15 @@ def command_line_runner(gff,position,width,out):
 		df8=df[:,8].to_list()[0]
 		df_all = zip(df3,df4,df8) #crate a zip include df3 df4 df8
 		posnow = pos[:,1].to_list()[0]
+		df_all2 = zip(df3,df4,df8)
+
+		for z in df_all2:
+			for a in posnow:
+				snp = int(a)
+				if z[0] <= snp < z[1]:
+					print("\nsnp {} in {}".format(snp,z[2]))
+				else:
+					pass
 		for z in df_all:
 			for a in posnow:
 				snp = int(a)
