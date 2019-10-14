@@ -2,9 +2,9 @@
 # coding=utf-8
 
 import os
-import datatable as dt
+from datatable import Frame,fread
 import click
-import collections
+from collections import defaultdict
 
 '''
 __author__ = 'xutengfei'
@@ -33,9 +33,9 @@ def command_line_runner(gff,position,width,out):
 	_VERSION = "1.0.0"
 	try:
 		print("--------------------------------------------\nLooking for genes...\nThe gene and iterative position will be saved in {}".format(out))
-		mydcit = collections.defaultdict(list)
-		df  = dt.fread(gff,sep='\t',header=False)
-		pos = dt.fread(position,sep='\t',header=False)
+		mydcit = defaultdict(list)
+		df  = fread(gff,sep='\t',header=False)
+		pos = fread(position,sep='\t',header=False)
 		outfile = open(out,'w')
 		df3=df[:,3].to_list()[0]
 		df4=df[:,4].to_list()[0]
