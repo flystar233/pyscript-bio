@@ -29,7 +29,7 @@ def splitfile(filepath,linesize=10):
                 break
             partnum += 1
  
-        print('Split file done')
+        print('Split file done!')
  
 if (len(sys.argv)==3):
         splitfile(sys.argv[1],sys.argv[2])
