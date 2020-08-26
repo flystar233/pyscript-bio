@@ -3,18 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 
-def ppoints(n, a=0.5):
-    if a < 0 or a > 1:
-        msg = "`a` could just be any float value in (0, 1)."
-        raise ValueError(msg) 
-
-    try:
-        n = np.float(len(n))
-    except TypeError:
-        n = np.float(n)
-
-    return (np.arange(n) + 1 - a)/(n + 1 - 2*a)
-
 def FormatData(path, sep = '\t', chromosome = 'chr', p_value = 'p'):
     data = pd.read_table(path, sep = sep)
     data['-log10(p_value)'] = -np.log10(data[p_value])
@@ -66,11 +54,12 @@ def qqplot(data, alpha=0.8,export_path ="Q-Q.png"):
     xlabel = 'Expected(-log10)' 
     ylabel = 'Observed(-log10)'
     data = np.array(data, dtype=float)
-    e = ppoints(len(data))
+    length  = len(data)
+    e = (np.arange(length)+1-0.5)/length #(0,1) from R function ppoints
     o = -np.log10(sorted(data))
     e = -np.log10(e)
     ax.scatter(e, o, alpha=alpha, edgecolors='none')
-    ax.plot([e.min(), e.max()], [e.min(), e.max()], color='r',linestyle='-')
+    ax.plot([e.min(), e.max()], [e.min(), e.max()], color='r',linestyle='-') # guide line, y=x
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     ax.set_xlim(xmin=e.min(), xmax=1.05 * e.max())
@@ -91,10 +80,12 @@ def main():
     infile = args.infile
     outfile = args.outfile
     significance = args.significance
-    dat_gwas_output = FormatData(infile)
-    qqplot(dat_gwas_output[0]['p'])
+    dat_gwas_output = FormatData(infile) #deal with data
+
+    qqplot(dat_gwas_output[0]['p']) #qq plot
+
     if significance=="NA":
-        GenerateManhattan(dat_gwas_output,export_path=outfile)
+        GenerateManhattan(dat_gwas_output,export_path=outfile) #Manhattan plot
     else:
         GenerateManhattan(dat_gwas_output,export_path=outfile,significance=float(significance))
 
