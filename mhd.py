@@ -3,6 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 
+def ppoints(n, a=0.5):
+    if a < 0 or a > 1:
+        msg = "`a` could just be any float value in (0, 1)."
+        raise ValueError(msg) 
+
+    try:
+        n = np.float(len(n))
+    except TypeError:
+        n = np.float(n)
+
+    return (np.arange(n) + 1 - a)/(n + 1 - 2*a)
+
 def FormatData(path, sep = '\t', chromosome = 'chr', p_value = 'p'):
     data = pd.read_table(path, sep = sep)
     data['-log10(p_value)'] = -np.log10(data[p_value])
@@ -11,7 +23,7 @@ def FormatData(path, sep = '\t', chromosome = 'chr', p_value = 'p'):
     data_grouped = data.groupby((chromosome))
     return data, data_grouped
 
-def GenerateManhattan(pyhattan_object, export_path = "Manhattan.png", significance = None, colors = ['#E24E42', '#008F95'], refSNP = False):
+def GenerateManhattan(pyhattan_object, export_path = "Manhattan.png", significance = None, colors = ['#5da9fd', '#fdb15d'], refSNP = False):
     data = pyhattan_object[0]
     data_grouped = pyhattan_object[1]
 
@@ -34,7 +46,7 @@ def GenerateManhattan(pyhattan_object, export_path = "Manhattan.png", significan
     ax.set_ylim([0, data['-log10(p_value)'].max() + 1])
     ax.set_xlabel('Chromosome')
     if significance:
-        plt.axhline(y=significance, color='gray', linestyle='-', linewidth = 1)
+        plt.axhline(y=significance, color='red', linestyle='-', linewidth = 1)
     plt.xticks(fontsize=8, rotation=45)
     plt.yticks(fontsize=8)
 
@@ -43,6 +55,28 @@ def GenerateManhattan(pyhattan_object, export_path = "Manhattan.png", significan
             if row['-log10(p_value)'] >= significance:
                 ax.annotate(str(row[refSNP]), xy = (index, row['-log10(p_value)']))
 
+    if export_path:
+        plt.savefig(export_path,dpi=300)
+    else:
+        plt.show()
+
+def qqplot(data, alpha=0.8,export_path ="Q-Q.png"):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    xlabel = 'Expected(-log10)' 
+    ylabel = 'Observed(-log10)'
+    data = np.array(data, dtype=float)
+    e = ppoints(len(data))
+    o = -np.log10(sorted(data))
+    e = -np.log10(e)
+    ax.scatter(e, o, alpha=alpha, edgecolors='none')
+    ax.plot([e.min(), e.max()], [e.min(), e.max()], color='r',linestyle='-')
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.set_xlim(xmin=e.min(), xmax=1.05 * e.max())
+    ax.set_ylim(ymin=o.min())
+    ax.set_xlabel(xlabel) 
+    ax.set_ylabel(ylabel)
     if export_path:
         plt.savefig(export_path,dpi=300)
     else:
@@ -58,10 +92,13 @@ def main():
     outfile = args.outfile
     significance = args.significance
     dat_gwas_output = FormatData(infile)
+    qqplot(dat_gwas_output[0]['p'])
     if significance=="NA":
         GenerateManhattan(dat_gwas_output,export_path=outfile)
     else:
         GenerateManhattan(dat_gwas_output,export_path=outfile,significance=float(significance))
 
 if __name__ == "__main__":
+	# cite: https://github.com/ShujiaHuang/geneview/blob/master/geneview/gwas/_qq.py
+	# cite: https://github.com/Pudkip/Pyhattan/blob/master/Pyhattan/__init__.py
     main()
