@@ -64,7 +64,7 @@ def main():
 	city = args.city
 	start = args.start
 	end = args.end
-	assert start>=2011,"Start time should't less than 2010"
+	assert start>=2011,"Start time should't less than 2011"
 	assert end>=start,"Start time bigger than end time!"
 	make_plot(city,range(start,end+1))
 if __name__ == "__main__":
