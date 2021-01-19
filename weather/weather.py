@@ -18,14 +18,16 @@ def get_temperature(url):
 	ul_tag1 = soup.find_all('div',class_='th200') # date tag
 	date = []
 	for i in ul_tag1:
-		result = re.findall(r'>(.*)</div>',str(i))[0]
+		#result = re.findall(r'>(.*)</div>',str(i))[0]
+		result = i.get_text()
 		date.append(result)
 
 	ul_tag2 = soup.find_all('div',class_='th140') # temperature tag
 	tianqi = []
 	tmp = []
 	for i in ul_tag2:
-		result = re.findall(r'>(.*)</div>',str(i))[0]
+		#result = re.findall(r'>(.*)</div>',str(i))[0]
+		result = i.get_text()
 		tmp.append(result)
 		if len(tmp)==4:
 			tianqi.append(tmp)
@@ -55,17 +57,56 @@ def make_plot(city,time):
 	plt.grid(axis='y')
 	plt.savefig('weather.pdf')
 
+
+def get_future_temperature(city):
+	header = {
+	'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+	'Accept-Encoding': 'gzip, deflate, sdch',
+	'Accept-Language': 'zh-CN,zh;q=0.8',
+	'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36'}
+	city_pinyin = ''.join(lazy_pinyin(city))
+	url = f'http://tianqi.com/{city_pinyin}/15.html'
+	req = requests.get(url, headers=header)
+	req.encoding = 'utf-8'
+	soup = BeautifulSoup(req.text, "html5lib")
+	ul_tag1 = soup.find_all('span',class_='fl')
+	date = []
+	for i in ul_tag1:
+		#result = re.findall(r'>(.*)</span>',str(i))[0]
+		result = i.get_text()
+		date.append(result)
+	ul_tag2 = soup.find_all('div',class_='weaul_z')
+	tianqi = []
+	for i in ul_tag2:
+		if re.search(r'span',str(i)):
+			result = re.findall(r'<span>(.*?)</span>',str(i))
+			tianqi.append([int(i) for i in  result])
+	mydict = dict(zip(date,tianqi))
+	df = pd.DataFrame(mydict).T
+	df.columns = ['the low','the high']
+	fig, ax = plt.subplots(figsize=(12, 6))
+	plt.hlines(0, 0,15, colors = "r")
+	df.plot(ax =ax,title=f"{city} 未来15天温度变化",lw=1)
+	plt.rcParams['font.sans-serif']=['SimHei']
+	plt.rcParams['axes.unicode_minus']=False
+	plt.grid(axis='y')
+	plt.savefig('future_weather.pdf')
+
 def main():
 	parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 	parser.add_argument("-c", "--city", action="store", dest="city", required=True,help="the city")
-	parser.add_argument("-s", "--start", type =int, dest="start",required=True,help="start year")
-	parser.add_argument("-e", "--end", type =int, dest="end",required=True,help="end year")
+	parser.add_argument("-s", "--start", type =int, dest="start",help="start year")
+	parser.add_argument("-e", "--end", type =int, dest="end",help="end year")
 	args = parser.parse_args()
 	city = args.city
 	start = args.start
 	end = args.end
-	assert start>=2011,"Start time should't less than 2011"
-	assert end>=start,"Start time bigger than end time!"
-	make_plot(city,range(start,end+1))
+	if start and end:
+		assert start>=2011,"Start time should't less than 2011"
+		assert end>=start,"Start time bigger than end time!"
+		make_plot(city,range(start,end+1))
+	else:
+		get_future_temperature(city)
+
 if __name__ == "__main__":
     main()
