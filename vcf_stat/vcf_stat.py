@@ -171,7 +171,7 @@ def vcf_stat(vcf,outfile1,outfile2,sample_name,select,pdf,start,end):
 					df = df.reindex(index=sample_list[::-1]) # Custom sample order
 				else:
 					df = df.reindex(index=SAMPLE_list[::-1])
-				fig = plt.figure(figsize=(15,2))
+				fig = plt.figure(figsize=(15,5))
 				ax = fig.add_subplot(1,1,1)
 				plt.pcolormesh(df,cmap=plt.cm.binary)
 				ax.yaxis.set_ticks([])
