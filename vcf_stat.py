@@ -3,7 +3,6 @@ import re
 import click
 import gzip
 from  collections import defaultdict
-import matplotlib.pyplot as plt
 
 pattern = {'GT':'K','AC':'M','AG':'R','CG':'S','CT':'Y','AT':'W','TG':'K','CA':'M','GA':'R','GC':'S','TC':'Y','TA':'W'}
 def decomment(csvfile):
@@ -18,10 +17,12 @@ def decomment(csvfile):
 @click.option(
     "-s", "--select", default="a", type=str, help="The number of alleles is one(a) or two(other)", show_default=True)
 @click.option(
+    "-p", "--pdf", default="True", type=str, help="make plot ", show_default=True)
+@click.option(
     "-v", "--outfile1", default="out.vcf",type=str, help="streamlined vcf file",show_default=True)
 @click.option(
     "-g", "--outfile2", default="out.geno", type=str, help="genotype file ", show_default=True)
-def vcf_stat(vcf,outfile1,outfile2,select):
+def vcf_stat(vcf,outfile1,outfile2,select,pdf):
 	try:
 		if vcf.endswith('gz'):
 			opener = gzip.open
@@ -123,27 +124,31 @@ def vcf_stat(vcf,outfile1,outfile2,select):
 				OUT3.write(f'    {result[0]}: {result[1]}\n')
 
 			####################################### make pdf
-			fig = plt.figure(figsize=(10,8))
-			plt.style.use('ggplot')
-			plt.subplots_adjust(wspace =0)
-			ax = fig.add_subplot(1,2,2)
-			plt.barh(range(len(snp_type)),snp_number,tick_label=list(snp_type),color=['royalblue'])
-			plt.xlabel('snp number',{'family' : 'Arial','weight' : 'normal','size' : 12})
-			ax.xaxis.get_major_formatter().set_powerlimits((0,1)) #kexuejishu
-			ax.yaxis.set_ticks_position('right') 
-			plt.tick_params(labelsize=12)
+			if pdf =='True':
+				import matplotlib.pyplot as plt
+				fig = plt.figure(figsize=(10,8))
+				plt.style.use('ggplot')
+				plt.subplots_adjust(wspace =0)
+				ax = fig.add_subplot(1,2,2)
+				plt.barh(range(len(snp_type)),snp_number,tick_label=list(snp_type),color=['royalblue'])
+				plt.xlabel('snp number',{'family' : 'Arial','weight' : 'normal','size' : 12})
+				ax.xaxis.get_major_formatter().set_powerlimits((0,1)) #kexuejishu
+				ax.yaxis.set_ticks_position('right') 
+				plt.tick_params(labelsize=12)
 
-			plt.subplot(1,2,1)
-			ax2 = fig.add_subplot(1,2,1)
-			im = plt.imshow(heatmap_list, cmap=plt.cm.hot_r,interpolation='none')
-			cbaxes = fig.add_axes([0.08, 0.75, 0.02, 0.2]) #set colorbar position
-			xx = plt.colorbar(im,cbaxes)
-			#plt.xticks(range(3), ['aa','Aa','AA'])
-			plt.tick_params(labelsize=12)
-			ax2.yaxis.set_ticks([])
-			ax2.xaxis.set_ticks([])
-			plt.tight_layout()
-			plt.savefig("snp_count.pdf")
+				plt.subplot(1,2,1)
+				ax2 = fig.add_subplot(1,2,1)
+				im = plt.imshow(heatmap_list, cmap=plt.cm.hot_r,interpolation='none')
+				cbaxes = fig.add_axes([0.08, 0.75, 0.02, 0.2]) #set colorbar position
+				xx = plt.colorbar(im,cbaxes)
+				#plt.xticks(range(3), ['aa','Aa','AA'])
+				plt.tick_params(labelsize=12)
+				ax2.yaxis.set_ticks([])
+				ax2.xaxis.set_ticks([])
+				plt.tight_layout()
+				plt.savefig("snp_count.pdf")
+			else:
+				pass
 	except FileNotFoundError:
 		print("The file you inputed was not found")
 	except:
