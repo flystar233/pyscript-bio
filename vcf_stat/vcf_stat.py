@@ -161,7 +161,7 @@ def vcf_stat(vcf,outfile1,outfile2,sample_name,select,pdf,start,end):
 						elif snp =='0/1':
 							snp=2
 						elif snp =='1/1':
-							snp=3
+							snp=1
 						tmp.append(snp)
 					tran_snp_list.append(tmp)
 				df = pd.DataFrame(tran_snp_list,columns=SAMPLE_list).T
