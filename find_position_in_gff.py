@@ -1,50 +1,55 @@
 import argparse
+import copy
 def get_mRNA_list(gff_file):
-    with open(gff_file, 'r') as file:
-        CDS_list=[]
-        all_mRNA_list=[]
-        for line in file:
+    mRNA_list = {}
+    with open(gff_file, 'r') as f:
+        for line in f:
             if not line.startswith('#'):
-                data = line.strip().split()
-                seqid = data[0]
-                feature = data[2]
-                pos = [int(data[3]),int(data[4])]
-                if feature=='mRNA':
-                    CDS_list.sort(key=lambda x: x[0])
-                    all_mRNA_list.append(CDS_list)
-                    CDS_list=[]
-                CDS_list.append(pos)
-        all_mRNA_list.pop(0)
-        return all_mRNA_list
+                line = line.strip().split()
+                chromosome = line[0]
+                feature = line[2]
+                start = int(line[3])
+                end = int(line[4])
+                if chromosome not in mRNA_list:
+                    mRNA_list[chromosome] = []
+                if feature == "mRNA":
+                    mRNA_list[chromosome].append([])
+                mRNA_list[chromosome][-1].extend([[start, end]])
+    return mRNA_list
                 
-def get_snp_location(snp,mRNA_list):
-    for mrna_index,mRNA in enumerate(mRNA_list):
-        mRNA_quantity=len(mRNA_list)
-        if mRNA[0][0]<=snp<=mRNA[0][1]:
-            mRNA.pop(0)
-            CDS_quantity=len(mRNA)
-            for cds_index,pos in enumerate(mRNA):
-                if pos[0]<=snp<=pos[1]:
-                    print(f'{snp}\texon\t({cds_index+1})')
-                    break
-                else:
-                    if cds_index+1 < CDS_quantity:
-                        pass
-                    else:
-                        print(f'{snp}\tintron')
+def get_snp_location(snp_chromosome,snp_position,mRNA_list):
+    tmp_mRNA_list = copy.deepcopy(mRNA_list)
+    if snp_chromosome in tmp_mRNA_list:
+        specified_chromosome_data=tmp_mRNA_list[snp_chromosome]
+        for mrna_index,mRNA in enumerate(specified_chromosome_data):
+            mRNA_quantity=len(tmp_mRNA_list)
+            if mRNA[0][0]<=snp_position<=mRNA[0][1]:
+                mRNA.pop(0)
+                CDS_quantity=len(mRNA)
+                for cds_index,pos in enumerate(mRNA):
+                    if pos[0]<=snp_position<=pos[1]:
+                        print(f'{snp_chromosome}\t{snp_position}\texon\t({cds_index+1})')
                         break
-            break
-        else:
-            if mrna_index+1 < mRNA_quantity:
-                pass
-            else:
-                print(f'{snp}\tintergenic')
+                    else:
+                        if cds_index+1 < CDS_quantity:
+                            pass
+                        else:
+                            print(f'{snp_chromosome}\t{snp_position}\tintron')
+                            break
                 break
+            else:
+                if mrna_index+1 < mRNA_quantity:
+                    pass
+                else:
+                    print(f'{snp_chromosome}\t{snp_position}\tintergenic')
+                    break
+    else:
+        pass
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("-p", "--pos", action="store", dest="pos", required=True,help="SNP position file,only one row is needed")
-    parser.add_argument("-g", "--gff", action="store", dest="gff",required=True,help="gff file,only need mRNA and CDS rows,and only one chromosome is supported")
+    parser.add_argument("-p", "--pos", action="store", dest="pos", required=True,help="SNP position file,(chr    pos)")
+    parser.add_argument("-g", "--gff", action="store", dest="gff",required=True,help="gff file,only need mRNA and CDS rows")
     args = parser.parse_args()
     pos = args.pos
     gff = args.gff
@@ -52,7 +57,10 @@ def main():
     with open(pos, 'r') as IN1:
         all_pos= IN1.readlines()
         for pos in all_pos:
-            get_snp_location(int(pos),mRNA_list)
+            pos=pos.strip().split()
+            snp_chromosome=pos[0]
+            snp_position=pos[1]
+            get_snp_location(snp_chromosome,int(snp_position),mRNA_list)
 
 
 if __name__ == "__main__":
