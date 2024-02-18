@@ -48,7 +48,7 @@ def get_snp_location(snp_chromosome,snp_position,mRNA_list):
                 CDS_quantity=len(mRNA)-1 # Count the number of CDS
                 for cds_index,pos in enumerate(mRNA[1:]):
                     if pos[0]<=snp_position<=pos[1]:
-                        print(f'{snp_chromosome}\t{snp_position}\texon\t({cds_index+1})')
+                        print(f'{snp_chromosome}\t{snp_position}\texon ({cds_index+1})')
                         break
                     else:
                         if cds_index+1 < CDS_quantity:
