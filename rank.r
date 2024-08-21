@@ -1,66 +1,63 @@
-library(randomForest)
+library(ranger)
 library(outForest)
 library(dplyr)
+
+get_quantily_value <- function(name){
+    str<- gsub("[^0-9.]", "", name)
+    value <- as.numeric(str)
+    return(value)
+}
+
 find_max_index <- function(x, y) {
-# 找出y在x中的位置的最大索引
     index <- which(x == y)
-    if (length(index) == 1) {
-# 如果x中有值等于y
+    if (length(index) >= 1) {
         index_name <- names(x)[index]
-        return(index_name)
-    } else if (length(index) > 1) {
-        if(median(index)<500){
-            min_index <- min(index)
-            min_index_name <- names(x)[min_index]
-        }else{
-            max_index <- max(index)
-            max_index_name <- names(x)[max_index]
-        }
-        }
-        else {
-# 如果x中没有值等于y
+        value<-get_quantily_value(index_name)
+        return(value)
+    } 
+    else {
         closest_index <- which.min(abs(x - y))
         closest_index_name <- names(x)[closest_index]
-        return(closest_index_name)
+        value <- get_quantily_value(closest_index_name)
+        return(value)
     }
 }
 
-get_rank <-function(x,y,what=seq(from = 0.001, to = 0.999, by = 0.001)){
-    qrf <- randomForest( x=x,y=y)
-    nodesX <- attr(predict(qrf,x,nodes=TRUE),"nodes")
-    rownames(nodesX) <- NULL
-    nnodes <- max(nodesX)
-    ntree <- ncol(nodesX)
-    n <- nrow(x)
-    valuesNodes  <- matrix(nrow=nnodes,ncol=ntree)
+get_rank <-function(x,y,quantiles=seq(from = 0.001, to = 0.999, by = 0.001)){
+    qrf <- ranger(x=x,y=y,quantreg = TRUE)
+    pred <- predict(qrf, x, type = "quantiles",quantiles=quantiles)
+    outMatrix <- pred$predictions
+    median_outMatrix <- outMatrix[,(length(quantiles)+1)/2]
+    diffs = y - median_outMatrix
+    rmse <- sqrt(sum(diffs*diffs)/(length(diffs)-1))
 
-    for (tree in 1:ntree){
-      shuffledNodes <- nodesX[rank(ind <- sample(1:n,n)),tree]
-      useNodes <- sort(unique(as.numeric(shuffledNodes)))
-      valuesNodes[useNodes,tree] <- y[ind[match(useNodes,shuffledNodes)]]
-    }
-
-    valuesPredict <- 0*nodesX
-    for (tree in 1:ntree){
-            valuesPredict[,tree] <- valuesNodes[nodesX[,tree],tree]  
+    rank_value <-c()
+    median_values <-c()
+    for (i in 1:length(y)){
+        median_values <- c(median_values,median_outMatrix[i])
+        rank_<- find_max_index(outMatrix[i,],y[i])
+        if (length(rank_)>1){
+            diff = y[i] -median_outMatrix[i]
+            if (abs(diff)>3*rmse & diff<0 ){
+                min_value <- min(rank_)
+                rank_value<-c(rank_value,min_value)
+            } else if (abs(diff)>3*rmse & diff>0) {
+                max_value <- max(rank_)
+                rank_value<-c(rank_value,max_value)
+            }else {
+                mean_value <- mean(rank_)
+                rank_value<-c(rank_value,mean_value)
+            }       
+        }else {
+            rank_value<-c(rank_value,rank_)
         }
-
-    result <- t(apply( valuesPredict,1,quantile, what,na.rm=TRUE)) 
+    }
+    result <- data.frame(orinal_value= y, median_values = median_values,rank = rank_value)
     return(result)
 
-}  
+}
 
 # Example usage
 iris1<-generateOutliers(iris, p = 0.2,seed=2024)
-outMatrix <- get_rank(iris1[,2:4], iris1[,1], what=seq(from = 0.001, to = 0.990, by = 0.001))
-
-xx<-c()
-median_value <-c()
-for (i in 1:length(iris1[,1])){
-    x<- find_max_index(outMatrix[i,],iris1[,1][i])
-    median_value <- c(median_value,outMatrix[i,50])
-    xx<-c(xx,x)
-}
-result <- data.frame(orinal_value1= iris[,1],orinal_value = iris1[,1], rank = xx, median_value = median_value)
-data<- result|> filter(orinal_value1!=orinal_value |rank<0.025 |rank>0.975)
-print(data)
+outMatrix <- get_rank(iris1[,2:4], iris1[,1])
+print(outMatrix)
